@@ -16,7 +16,7 @@
 - Сессионный API `GET` и `POST /api/receipts/`, который всегда возвращает и создаёт только чеки текущего пользователя; список отсортирован от новых к старым и разбит по 10 записей.
 - Обычная Django admin для staff, где причина обязательна при отклонении.
 - Next.js-экраны регистрации и личного кабинета: адаптивная вёрстка, inline-валидация, `fetch` + CSRF, статусы успеха и ошибки.
-- Docker Compose с PostgreSQL, Django и Next.js. Next.js проксирует `/api`, `/admin` и `/accounts` к Django, поэтому браузер использует один origin.
+- Docker Compose с PostgreSQL, Django, Next.js и Nginx. Nginx проксирует `/api`, `/admin` и `/accounts` к Django, напрямую отдаёт `/static/` и сохраняет для браузера один origin.
 
 ## Сверх задания
 
