@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+staticfiles/
+.next/
+node_modules/
+coverage/
+htmlcov/
+
+.env.local

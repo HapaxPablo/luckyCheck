@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Регистрация — Чек на удачу</title></head>
+<body>
+  <main>
+    <h1>Регистрация</h1>
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Создать аккаунт</button></form>
+    <p>Уже есть аккаунт? <a href="/accounts/login/">Войти</a></p>
+  </main>
+</body></html>
+
