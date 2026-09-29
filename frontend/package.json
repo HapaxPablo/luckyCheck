@@ -8,6 +8,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@zxing/browser": "^0.1.5",
+    "lucide-react": "^1.48.0",
     "next": "15.5.9",
     "react": "19.1.1",
     "react-dom": "19.1.1"
@@ -21,4 +23,3 @@
     "typescript": "5.8.3"
   }
 }
-
