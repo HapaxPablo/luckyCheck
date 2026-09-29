@@ -23,7 +23,7 @@ def promo_period() -> tuple[date, date]:
 class ReceiptCreateForm(forms.ModelForm):
     class Meta:
         model = Receipt
-        fields = ("fn", "fd", "fp", "purchased_at", "amount")
+        fields = ("fn", "fd", "fp", "purchased_at", "amount", "receipt_photo")
 
     def clean_fn(self) -> str:
         return self._clean_fiscal_field("fn", "ФН")
@@ -38,6 +38,10 @@ class ReceiptCreateForm(forms.ModelForm):
         value = self.cleaned_data[field].strip()
         if not value.isdigit():
             raise ValidationError(f"{label} должен содержать только цифры.")
+        allowed_lengths = {"fn": {16}, "fd": set(range(1, 11)), "fp": {8, 10}}
+        if len(value) not in allowed_lengths[field]:
+            expected = "16" if field == "fn" else "от 1 до 10" if field == "fd" else "8 или 10"
+            raise ValidationError(f"{label} должен содержать {expected} цифр.")
         return value
 
     def clean_amount(self) -> Decimal:

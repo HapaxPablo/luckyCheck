@@ -1,6 +1,15 @@
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 from django.db import models
+
+
+MAX_RECEIPT_PHOTO_SIZE = 5 * 1024 * 1024
+
+
+def validate_receipt_photo_size(photo) -> None:
+    if photo.size > MAX_RECEIPT_PHOTO_SIZE:
+        raise ValidationError("Размер фотографии чека не должен превышать 5 МБ.")
 
 
 class Receipt(models.Model):
@@ -16,6 +25,15 @@ class Receipt(models.Model):
     amount = models.DecimalField("Сумма", max_digits=12, decimal_places=2)
     status = models.CharField("Статус", max_length=16, choices=Status.choices, default=Status.PENDING)
     rejection_reason = models.TextField("Причина отказа", blank=True)
+    receipt_photo = models.ImageField(
+        "Фотография чека",
+        upload_to="receipts/%Y/%m/%d/",
+        blank=True,
+        validators=[
+            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp"]),
+            validate_receipt_photo_size,
+        ],
+    )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -45,4 +63,32 @@ class Receipt(models.Model):
 
     def __str__(self) -> str:
         return f"Чек ФН {self.fn}, ФД {self.fd}"
+
+
+class Notification(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="receipt_notifications",
+        verbose_name="Пользователь",
+    )
+    receipt = models.ForeignKey(
+        Receipt,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        verbose_name="Чек",
+    )
+    status = models.CharField("Новый статус", max_length=16, choices=Receipt.Status.choices)
+    message = models.CharField("Текст", max_length=255)
+    created_at = models.DateTimeField("Дата создания", auto_now_add=True)
+    read_at = models.DateTimeField("Дата прочтения", null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=("owner", "read_at", "-created_at"))]
+        verbose_name = "уведомление"
+        verbose_name_plural = "уведомления"
+
+    def __str__(self) -> str:
+        return self.message
 
