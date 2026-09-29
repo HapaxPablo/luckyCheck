@@ -4,12 +4,12 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
-MAX_RECEIPT_PHOTO_SIZE = 5 * 1024 * 1024
+MAX_RECEIPT_PHOTO_SIZE = 10 * 1024 * 1024
 
 
 def validate_receipt_photo_size(photo) -> None:
     if photo.size > MAX_RECEIPT_PHOTO_SIZE:
-        raise ValidationError("Размер фотографии чека не должен превышать 5 МБ.")
+        raise ValidationError("Размер фотографии чека не должен превышать 10 МБ.")
 
 
 class Receipt(models.Model):
