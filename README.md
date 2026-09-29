@@ -7,7 +7,7 @@
 1. Скопируйте `.env.example` в `.env` и задайте безопасные значения `DJANGO_SECRET_KEY` и `POSTGRES_PASSWORD`.
 2. Выполните `docker compose up --build`.
 3. Откройте [http://localhost:3000](http://localhost:3000). Страницы входа и регистрации доступны по `/accounts/login/` и `/accounts/register/`.
-4. Для модератора создайте пользователя: `docker compose exec backend python manage.py createsuperuser`, затем в `/admin/` включите ему флаг staff.
+4. Для модератора создайте пользователя: `docker compose exec backend python manage.py createsuperuser`, затем откройте `http://admin.localhost:3000/admin/`. Этот адрес использует отдельную сессию от пользовательского сайта `http://localhost:3000`.
 
 ## Реализовано
 
