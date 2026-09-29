@@ -1,10 +1,4 @@
+{% load static %}
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><title>Вход — Чек на удачу</title></head>
-<body>
-  <main>
-    <h1>Вход</h1>
-    <form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Войти</button></form>
-    <p>Нет аккаунта? <a href="/accounts/register/">Зарегистрироваться</a></p>
-  </main>
-</body></html>
-
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Вход — Чек на удачу</title><link rel="stylesheet" href="{% static 'receipts/auth.css' %}"></head>
+<body><main class="auth-page"><header class="auth-header"><a class="wordmark" href="/">ЧЕК<br>НА УДАЧУ</a><a class="back-link" href="/">← На сайт</a></header><section class="auth-card" aria-labelledby="login-title"><span class="eyebrow">Промо-акция «Чек на удачу»</span><h1 id="login-title">Вход</h1><p class="lead">Войдите, чтобы зарегистрировать чек и смотреть историю заявок.</p><form method="post" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-error" role="alert">{{ form.non_field_errors }}</div>{% endif %}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}<div class="form-fields"><label class="field" for="{{ form.username.id_for_label }}">Логин{{ form.username }}{% for error in form.username.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label><label class="field" for="{{ form.password.id_for_label }}">Пароль{{ form.password }}{% for error in form.password.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label></div><button class="submit" type="submit">Войти</button></form><p class="auth-switch">Нет аккаунта? <a href="/accounts/register/">Зарегистрироваться</a></p></section></main></body></html>

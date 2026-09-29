@@ -1,10 +1,4 @@
+{% load static %}
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><title>Регистрация — Чек на удачу</title></head>
-<body>
-  <main>
-    <h1>Регистрация</h1>
-    <form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Создать аккаунт</button></form>
-    <p>Уже есть аккаунт? <a href="/accounts/login/">Войти</a></p>
-  </main>
-</body></html>
-
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Регистрация — Чек на удачу</title><link rel="stylesheet" href="{% static 'receipts/auth.css' %}"></head>
+<body><main class="auth-page"><header class="auth-header"><a class="wordmark" href="/">ЧЕК<br>НА УДАЧУ</a><a class="back-link" href="/">← На сайт</a></header><section class="auth-card" aria-labelledby="register-title"><span class="eyebrow">Промо-акция «Чек на удачу»</span><h1 id="register-title">Регистрация</h1><p class="lead">Создайте аккаунт, чтобы участвовать в акции.</p><form method="post" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-error" role="alert">{{ form.non_field_errors }}</div>{% endif %}<div class="form-fields"><label class="field" for="{{ form.username.id_for_label }}">Логин{{ form.username }}{% for error in form.username.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label><label class="field" for="{{ form.password1.id_for_label }}">Пароль{{ form.password1 }}{% for error in form.password1.errors %}<span class="field-error">{{ error }}</span>{% endfor %}<span class="help">Пароль должен быть не короче 8 символов.</span></label><label class="field" for="{{ form.password2.id_for_label }}">Повторите пароль{{ form.password2 }}{% for error in form.password2.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label></div><button class="submit" type="submit">Создать аккаунт</button></form><p class="auth-switch">Уже есть аккаунт? <a href="/accounts/login/">Войти</a></p></section></main></body></html>
