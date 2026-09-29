@@ -1,6 +1,6 @@
 "use client";
 
-import { BrowserQRCodeReader, IScannerControls } from "@zxing/browser";
+import { BrowserQRCodeReader, type IScannerControls } from "@zxing/browser";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
@@ -26,7 +26,7 @@ const emptyValues: FormValues = {
   amount: "",
 };
 const allowedPhotoTypes = ["image/jpeg", "image/png", "image/webp"];
-const maxPhotoSize = 5 * 1024 * 1024;
+const maxPhotoSize = 10 * 1024 * 1024;
 
 function getCookie(name: string) {
   return (
@@ -91,7 +91,7 @@ function validate(
     if (!allowedPhotoTypes.includes(photo.type))
       errors.receipt_photo = "Можно загрузить JPG, PNG или WebP.";
     else if (photo.size > maxPhotoSize)
-      errors.receipt_photo = "Размер фотографии не должен превышать 5 МБ.";
+      errors.receipt_photo = "Размер фотографии не должен превышать 10 МБ.";
   }
   return errors;
 }
@@ -104,6 +104,7 @@ export function ReceiptForm({ promoStart, promoEnd }: Props) {
   const [showQr, setShowQr] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [qrError, setQrError] = useState("");
+  const [cameraStatus, setCameraStatus] = useState("Подключаем камеру…");
   const [readingImage, setReadingImage] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [notice, setNotice] = useState<{
@@ -114,6 +115,7 @@ export function ReceiptForm({ promoStart, promoEnd }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const qrImageInputRef = useRef<HTMLInputElement>(null);
   const scannerControlsRef = useRef<IScannerControls | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   const update = (field: keyof FormValues, value: string) => {
     setValues((previous) => ({ ...previous, [field]: value }));
@@ -140,41 +142,80 @@ export function ReceiptForm({ promoStart, promoEnd }: Props) {
     if (!scannerOpen || !videoRef.current) return;
     const reader = new BrowserQRCodeReader();
     let disposed = false;
+    const video = videoRef.current;
 
-    reader
-      .decodeFromConstraints(
-        { video: { facingMode: { ideal: "environment" } } },
-        videoRef.current,
-        (result, _error, controls) => {
+    const stopCamera = () => {
+      scannerControlsRef.current?.stop();
+      scannerControlsRef.current = null;
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+      if (video) video.srcObject = null;
+    };
+
+    const startCamera = async () => {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Браузер не поддерживает доступ к камере.");
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+      if (disposed) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      cameraStreamRef.current = stream;
+      video.srcObject = stream;
+      video.muted = true;
+      video.playsInline = true;
+      await video.play();
+      if (disposed) return;
+      setCameraStatus("Наведите камеру на QR-код чека.");
+
+      const controls = await reader.decodeFromVideoElement(
+        video,
+        (result, _error, scanControls) => {
           if (!result || disposed) return;
           if (applyQr(result.getText())) {
-            controls.stop();
+            scanControls.stop();
             scannerControlsRef.current = null;
             setScannerOpen(false);
           }
         },
-      )
-      .then((controls) => {
-        if (disposed) controls.stop();
-        else scannerControlsRef.current = controls;
-      })
-      .catch(() => {
-        if (!disposed)
-          setQrError(
-            "Не удалось открыть камеру. Разрешите доступ или загрузите изображение QR.",
-          );
-      });
+      );
+      if (disposed) controls.stop();
+      else scannerControlsRef.current = controls;
+    };
+
+    setCameraStatus("Подключаем камеру…");
+    setQrError("");
+    void startCamera().catch((error: unknown) => {
+      if (disposed) return;
+      stopCamera();
+      const message = error instanceof Error ? error.message : "Неизвестная ошибка камеры.";
+      setCameraStatus("");
+      setQrError(
+        `${message} Проверьте разрешение и защищённое соединение (HTTPS), либо загрузите изображение QR.`,
+      );
+    });
 
     return () => {
       disposed = true;
-      scannerControlsRef.current?.stop();
-      scannerControlsRef.current = null;
+      stopCamera();
     };
   }, [applyQr, scannerOpen]);
 
   const closeScanner = () => {
     scannerControlsRef.current?.stop();
     scannerControlsRef.current = null;
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
     setScannerOpen(false);
   };
 
@@ -192,7 +233,7 @@ export function ReceiptForm({ promoStart, promoEnd }: Props) {
       return;
     }
     if (file.size > maxPhotoSize) {
-      setQrError("Размер изображения QR не должен превышать 5 МБ.");
+      setQrError("Размер изображения QR не должен превышать 10 МБ.");
       return;
     }
     setReadingImage(true);
@@ -386,7 +427,7 @@ export function ReceiptForm({ promoStart, promoEnd }: Props) {
                   </button>
                 </span>
               ) : (
-                <small className="photo-hint">JPG, PNG или WebP, до 5 МБ</small>
+                <small className="photo-hint">JPG, PNG или WebP, до 10 МБ</small>
               )}
               {errors.receipt_photo && (
                 <small className="field-error">{errors.receipt_photo}</small>
@@ -513,7 +554,7 @@ export function ReceiptForm({ promoStart, promoEnd }: Props) {
               </button>
             </div>
             <video ref={videoRef} muted playsInline autoPlay />
-            <p>Код будет распознан автоматически.</p>
+            <p>{cameraStatus || "Код будет распознан автоматически."}</p>
             {qrError ? (
               <p className="field-error" role="alert">
                 {qrError}
